@@ -11,9 +11,7 @@
         :disabled="answered"
       ></b-list-group-item>
     </b-list-group>
-    <button @click="nextQuestionMethod">Next</button>
-    <span v-if="selectedIndex === correctIndex">correct</span>
-    <span v-else>incorrect</span>
+    <button @click="nextQuestionMethod">{{total === index + 1? 'Finish' : 'Next' }}</button>
   </div>
 </template>
 
@@ -24,7 +22,10 @@ export default {
   name: 'QuestionBox',
   props: {
     question: Object,
-    nextQuestionMethod: Function
+    nextQuestionMethod: Function,
+    gotPointMethod: Function,
+    total: Number,
+    index: Number
   },
   data() {
     return {
@@ -43,6 +44,10 @@ export default {
     selectedAnswer(index) {
       this.selectedIndex = index;
       this.answered = true;
+
+      if (index === this.correctIndex) {
+        this.gotPointMethod();
+      }
     },
     shuffleAnswers() {
       this.shuffledAnswers = _.shuffle(this.answers);
@@ -51,9 +56,13 @@ export default {
       );
     },
     addClass(index) {
-      if(!this.answered) return '';
-      if(index === this.selectedIndex && this.selectedIndex !== this.correctIndex) return 'incorrect';
-      if(index === this.correctIndex) return 'correct'
+      if (!this.answered) return '';
+      if (
+        index === this.selectedIndex &&
+        this.selectedIndex !== this.correctIndex
+      )
+        return 'incorrect';
+      if (index === this.correctIndex) return 'correct';
     }
   },
   watch: {

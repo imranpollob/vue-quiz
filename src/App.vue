@@ -1,11 +1,28 @@
 <template>
   <div id="app">
-    <Header></Header>
-    <QuestionBox
-      v-if="questions.length"
-      :question="questions[index]"
-      :nextQuestionMethod="nextQuestion"
-    ></QuestionBox>
+    <div v-if="!selected">
+      Select number of questions you want to answer:
+      <select
+        v-model="selected"
+        @change="getQuestions"
+      >
+        <option value="5">5</option>
+        <option value="10">10</option>
+        <option value="15">15</option>
+        <option value="20">20</option>
+      </select>
+    </div>
+    <div v-if="selected">
+      <Header :total="parseInt(selected)" :correct="point"></Header>
+      <QuestionBox
+        v-if="questions.length"
+        :question="questions[index]"
+        :nextQuestionMethod="nextQuestion"
+        :gotPointMethod="gotPoint"
+        :total="parseInt(selected)"
+        :index="index"
+      ></QuestionBox>
+    </div>
   </div>
 </template>
 
@@ -22,19 +39,34 @@ export default {
   data() {
     return {
       questions: [],
-      index: 0
+      index: 0,
+      selected: null,
+      point: 0
     };
-  },
-  mounted() {
-    fetch('https://opentdb.com/api.php?amount=50')
-      .then(response => response.json())
-      .then(data => {
-        this.questions = data.results;
-      });
   },
   methods: {
     nextQuestion() {
       this.index++;
+      if (this.index >= this.selected) {
+        this.selected = null;
+        this.index = 0;
+        this.point = 0;
+        this.questions = [];
+      }
+    },
+    getQuestions: async function() {
+      try {
+        let res = await fetch(
+          'https://opentdb.com/api.php?amount=' + this.selected
+        );
+        res = await res.json();
+        this.questions = res.results;
+      } catch (e) {
+        console.log(e);
+      }
+    },
+    gotPoint() {
+      this.point++;
     }
   }
 };
