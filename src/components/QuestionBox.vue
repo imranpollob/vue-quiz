@@ -11,7 +11,7 @@
         :disabled="answered"
       ></b-list-group-item>
     </b-list-group>
-    <button @click="nextQuestionMethod">{{ total === index + 1 ? 'Finish' : 'Next' }}</button>
+    <button @click="nextQuestionMethod" class="btn btn-primary">{{ total === index + 1 ? 'Finish' : 'Next' }}</button>
   </div>
 </template>
 
