@@ -2,10 +2,7 @@
   <div id="app">
     <div v-if="!selected">
       Select number of questions you want to answer:
-      <select
-        v-model="selected"
-        @change="getQuestions"
-      >
+      <select v-model="selected" @change="getQuestions">
         <option value="5">5</option>
         <option value="10">10</option>
         <option value="15">15</option>
@@ -54,11 +51,9 @@ export default {
         this.questions = [];
       }
     },
-    getQuestions: async function() {
+    async getQuestions() {
       try {
-        let res = await fetch(
-          'https://opentdb.com/api.php?amount=' + this.selected
-        );
+        let res = await fetch(`https://opentdb.com/api.php?amount=${this.selected}`);
         res = await res.json();
         this.questions = res.results;
       } catch (e) {

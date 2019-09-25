@@ -11,7 +11,7 @@
         :disabled="answered"
       ></b-list-group-item>
     </b-list-group>
-    <button @click="nextQuestionMethod">{{total === index + 1? 'Finish' : 'Next' }}</button>
+    <button @click="nextQuestionMethod">{{ total === index + 1 ? 'Finish' : 'Next' }}</button>
   </div>
 </template>
 
@@ -51,16 +51,11 @@ export default {
     },
     shuffleAnswers() {
       this.shuffledAnswers = _.shuffle(this.answers);
-      this.correctIndex = this.shuffledAnswers.indexOf(
-        this.question.correct_answer
-      );
+      this.correctIndex = this.shuffledAnswers.indexOf(this.question.correct_answer);
     },
     addClass(index) {
       if (!this.answered) return '';
-      if (
-        index === this.selectedIndex &&
-        this.selectedIndex !== this.correctIndex
-      )
+      if (index === this.selectedIndex && this.selectedIndex !== this.correctIndex)
         return 'incorrect';
       if (index === this.correctIndex) return 'correct';
     }
