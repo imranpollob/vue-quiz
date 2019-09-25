@@ -2,7 +2,11 @@
   <div id="app">
     <img alt="Vue logo" src="./assets/logo.png" />
     <Header></Header>
-    <QuestionBox></QuestionBox>
+    <QuestionBox
+      v-if="questions.length"
+      :question="questions[index]"
+      :nextQuestionMethod="nextQuestion"
+    ></QuestionBox>
   </div>
 </template>
 
@@ -18,16 +22,21 @@ export default {
   },
   data() {
     return {
-      questions: []
+      questions: [],
+      index: 0
     };
   },
   mounted() {
     fetch('https://opentdb.com/api.php?amount=50')
       .then(response => response.json())
       .then(data => {
-        console.log(data);
         this.questions = data.results;
       });
+  },
+  methods: {
+    nextQuestion() {
+      this.index++;
+    }
   }
 };
 </script>
