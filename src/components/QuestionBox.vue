@@ -7,9 +7,13 @@
         :key="index"
         v-html="answer"
         @click="selectedAnswer(index)"
+        :class="[addClass(index)]"
+        :disabled="answered"
       ></b-list-group-item>
     </b-list-group>
     <button @click="nextQuestionMethod">Next</button>
+    <span v-if="selectedIndex === correctIndex">correct</span>
+    <span v-else>incorrect</span>
   </div>
 </template>
 
@@ -25,7 +29,9 @@ export default {
   data() {
     return {
       selectedIndex: null,
-      shuffledAnswers: []
+      shuffledAnswers: [],
+      correctIndex: null,
+      answered: false
     };
   },
   computed: {
@@ -36,9 +42,18 @@ export default {
   methods: {
     selectedAnswer(index) {
       this.selectedIndex = index;
+      this.answered = true;
     },
     shuffleAnswers() {
       this.shuffledAnswers = _.shuffle(this.answers);
+      this.correctIndex = this.shuffledAnswers.indexOf(
+        this.question.correct_answer
+      );
+    },
+    addClass(index) {
+      if(!this.answered) return '';
+      if(index === this.selectedIndex && this.selectedIndex !== this.correctIndex) return 'incorrect';
+      if(index === this.correctIndex) return 'correct'
     }
   },
   watch: {
@@ -46,6 +61,7 @@ export default {
       immediate: true,
       handler() {
         this.selectedIndex = null;
+        this.answered = false;
         this.shuffleAnswers();
       }
     }
@@ -54,15 +70,20 @@ export default {
 </script>
 
 <style scoped>
+.list-group-item:hover {
+  /* background: #EEE; */
+  cursor: pointer;
+}
+
 .selected {
   background-color: lightblue;
 }
 
 .correct {
-  background-color: lightblue;
+  background-color: lightgreen;
 }
 
 .incorrect {
-  background-color: lightblue;
+  background-color: red;
 }
 </style>
