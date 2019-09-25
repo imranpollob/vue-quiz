@@ -1,24 +1,40 @@
 <template>
   <div id="app">
     <img alt="Vue logo" src="./assets/logo.png" />
-    <HelloWorld msg="Welcome to Your Vue.js App" />
+    <Header></Header>
+    <QuestionBox></QuestionBox>
   </div>
 </template>
 
 <script>
-import HelloWorld from "./components/HelloWorld.vue";
+import Header from './components/Header';
+import QuestionBox from './components/QuestionBox';
 
 export default {
-  name: "app",
+  name: 'app',
   components: {
-    HelloWorld
+    Header,
+    QuestionBox
+  },
+  data() {
+    return {
+      questions: []
+    };
+  },
+  mounted() {
+    fetch('https://opentdb.com/api.php?amount=50')
+      .then(response => response.json())
+      .then(data => {
+        console.log(data);
+        this.questions = data.results;
+      });
   }
 };
 </script>
 
 <style>
 #app {
-  font-family: "Avenir", Helvetica, Arial, sans-serif;
+  font-family: 'Avenir', Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-align: center;
