@@ -1,5 +1,6 @@
 <template>
   <div class="text-center">
+    <div id="countdown" class="mt-3 text-muted">{{ index + 1 }} of {{ total }}</div>
     <div id="question">
       <p v-html="question.question" class="m-3"></p>
     </div>
@@ -7,18 +8,17 @@
       <ul class="list-group w-50 m-auto">
         <li
           class="list-group-item"
-          v-for="(answer, index) in shuffledAnswers"
-          :key="index"
+          v-for="(answer, i) in shuffledAnswers"
+          :key="i"
           v-html="answer"
-          @click="selectedAnswer(index)"
-          :class="[addClass(index)]"
-          :disabled="answered"
+          @click="selectedAnswer(i)"
+          :class="[addClass(i), answered ? 'disable' : '']"
         ></li>
       </ul>
     </div>
 
-    <button @click="nextQuestionMethod" class="btn btn-primary mt-3">
-      {{ total === index + 1 ? 'Finish' : 'Next' }}
+    <button @click="nextQuestionMethod" class="btn btn-primary mt-3 next-btn">
+      {{ index + 1 === total ? 'Finish' : 'Next' }}
     </button>
   </div>
 </template>
@@ -89,8 +89,27 @@ export default {
 #question {
   height: 100px;
   font-size: 18px;
+  font-weight: bold;
 }
 #answers {
   height: 300px;
+}
+#countdown {
+  font-size: 16px;
+  font-weight: bold;
+}
+.disable {
+  pointer-events: none;
+}
+button,
+button:visited,
+button:focus,
+button:hover,
+button:active {
+  outline: none !important;
+  box-shadow: none !important;
+}
+button:hover {
+  cursor: pointer;
 }
 </style>
