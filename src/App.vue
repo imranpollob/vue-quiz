@@ -1,6 +1,6 @@
 <template>
-  <div id="app">
-    <div v-if="!selected">
+  <div id="app" class="container">
+    <div v-if="!selected" id="selector" class="text-center">
       Select number of questions you want to answer:
       <select v-model="selected" @change="getQuestions">
         <option value="5">5</option>
@@ -67,13 +67,4 @@ export default {
 };
 </script>
 
-<style>
-/* #app {
-  font-family: 'Avenir', Helvetica, Arial, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  text-align: center;
-  color: #2c3e50;
-  margin-top: 60px;
-} */
-</style>
+<style></style>

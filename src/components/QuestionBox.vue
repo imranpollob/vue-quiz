@@ -1,17 +1,25 @@
 <template>
-  <div>
-    <h2 v-html="question.question"></h2>
-    <b-list-group>
-      <b-list-group-item
-        v-for="(answer, index) in shuffledAnswers"
-        :key="index"
-        v-html="answer"
-        @click="selectedAnswer(index)"
-        :class="[addClass(index)]"
-        :disabled="answered"
-      ></b-list-group-item>
-    </b-list-group>
-    <button @click="nextQuestionMethod" class="btn btn-primary">{{ total === index + 1 ? 'Finish' : 'Next' }}</button>
+  <div class="text-center">
+    <div id="question">
+      <p v-html="question.question" class="m-3"></p>
+    </div>
+    <div id="answers">
+      <ul class="list-group w-50 m-auto">
+        <li
+          class="list-group-item"
+          v-for="(answer, index) in shuffledAnswers"
+          :key="index"
+          v-html="answer"
+          @click="selectedAnswer(index)"
+          :class="[addClass(index)]"
+          :disabled="answered"
+        ></li>
+      </ul>
+    </div>
+
+    <button @click="nextQuestionMethod" class="btn btn-primary mt-3">
+      {{ total === index + 1 ? 'Finish' : 'Next' }}
+    </button>
   </div>
 </template>
 
@@ -56,8 +64,9 @@ export default {
     addClass(index) {
       if (!this.answered) return '';
       if (index === this.selectedIndex && this.selectedIndex !== this.correctIndex)
-        return 'incorrect';
-      if (index === this.correctIndex) return 'correct';
+        return 'list-group-item-danger';
+      if (index === this.correctIndex) return 'list-group-item-success';
+      return '';
     }
   },
   watch: {
@@ -75,19 +84,13 @@ export default {
 
 <style scoped>
 .list-group-item:hover {
-  /* background: #EEE; */
   cursor: pointer;
 }
-
-.selected {
-  background-color: lightblue;
+#question {
+  height: 100px;
+  font-size: 18px;
 }
-
-.correct {
-  background-color: lightgreen;
-}
-
-.incorrect {
-  background-color: red;
+#answers {
+  height: 300px;
 }
 </style>
