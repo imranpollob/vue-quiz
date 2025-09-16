@@ -1,90 +1,246 @@
 <template>
-  <div id="app" class="container">
-    <completed
-      v-if="completed"
-      :total="parseInt(selected)"
-      :correct="point"
-      :restart="restart"
-    ></completed>
-    <div v-else>
-      <div v-if="!selected" id="selector" class="text-center">
-        Select number of questions you want to answer:
-        <select v-model="selected" @change="getQuestions">
-          <option value="5">5</option>
-          <option value="10">10</option>
-          <option value="15">15</option>
-          <option value="20">20</option>
-        </select>
+  <div class="app-shell">
+    <Header
+      :status="status"
+      :score="score"
+      :total="questionCount"
+      :question-number="currentIndex"
+      @restart="restart"
+    />
+
+    <section class="content">
+      <QuizSetup v-if="status === 'idle'" @start="startQuiz" />
+
+      <div v-else-if="status === 'loading'" class="state-card">
+        <div class="spinner"></div>
+        <p>Fetching fresh trivia…</p>
       </div>
-      <div v-else>
-        <Header :total="parseInt(selected)" :correct="point"></Header>
-        <QuestionBox
-          v-if="questions.length"
-          :question="questions[index]"
-          :nextQuestionMethod="nextQuestion"
-          :gotPointMethod="gotPoint"
-          :total="parseInt(selected)"
-          :index="index"
-        ></QuestionBox>
+
+      <div v-else-if="status === 'error'" class="state-card">
+        <h2>Hmm, that didn't work</h2>
+        <p>{{ errorMessage }}</p>
+        <div class="state-actions">
+          <button class="primary" type="button" @click="retryFetch">Try again</button>
+          <button class="ghost" type="button" @click="restart">Change setup</button>
+        </div>
       </div>
-    </div>
+
+      <QuestionBox
+        v-else-if="status === 'active' && currentQuestion"
+        :question="currentQuestion"
+        :index="currentIndex"
+        :total="questionCount"
+        @answer="handleAnswer"
+        @next="goToNextQuestion"
+      />
+
+      <Completed
+        v-else-if="status === 'complete'"
+        :score="score"
+        :total="questionCount"
+        :settings="lastSettings"
+        @play-again="playAgain"
+        @change-settings="restart"
+      />
+    </section>
   </div>
 </template>
 
-<script>
-import Header from './components/Header';
-import QuestionBox from './components/QuestionBox';
-import Completed from './components/Completed';
+<script setup>
+import { computed, ref } from 'vue';
+import axios from 'axios';
 
-export default {
-  name: 'app',
-  components: {
-    Header,
-    QuestionBox,
-    Completed
-  },
-  data() {
-    return {
-      questions: [],
-      index: 0,
-      selected: null,
-      point: 0,
-      completed: false
-    };
-  },
-  methods: {
-    restart() {
-      this.completed = false;
-      this.selected = null;
-      this.index = 0;
-      this.point = 0;
-      this.questions = [];
-    },
-    nextQuestion() {
-      this.index++;
-      if (this.index >= this.selected) {
-        this.completed = true;
-      }
-    },
-    async getQuestions() {
-      try {
-        let res = await fetch(`https://opentdb.com/api.php?amount=${this.selected}`);
-        res = await res.json();
-        this.questions = res.results;
-      } catch (e) {
-        console.log(e);
-      }
-    },
-    gotPoint() {
-      this.point++;
+import Header from './components/Header.vue';
+import QuestionBox from './components/QuestionBox.vue';
+import Completed from './components/Completed.vue';
+import QuizSetup from './components/QuizSetup.vue';
+
+const status = ref('idle');
+const questions = ref([]);
+const currentIndex = ref(0);
+const score = ref(0);
+const errorMessage = ref('');
+const lastSettings = ref(null);
+
+const questionCount = computed(() => questions.value.length);
+const currentQuestion = computed(() => questions.value[currentIndex.value]);
+
+const shuffleAnswers = options =>
+  [...options]
+    .map(option => ({ option, sort: Math.random() }))
+    .sort((a, b) => a.sort - b.sort)
+    .map(({ option }) => option);
+
+const startQuiz = async settings => {
+  status.value = 'loading';
+  errorMessage.value = '';
+  lastSettings.value = { ...settings };
+
+  try {
+    const params = new URLSearchParams();
+    params.append('amount', settings.amount);
+    if (settings.difficulty) params.append('difficulty', settings.difficulty);
+    if (settings.category) params.append('category', settings.category);
+
+    const { data } = await axios.get('https://opentdb.com/api.php', { params });
+
+    if (!data.results || !data.results.length) {
+      throw new Error('No questions were available for that combination. Try different filters.');
     }
+
+    const timestamp = Date.now();
+
+    questions.value = data.results.map((question, index) => ({
+      id: `${timestamp}-${index}`,
+      ...question,
+      answers: shuffleAnswers([
+        ...(question.incorrect_answers || []),
+        question.correct_answer
+      ])
+    }));
+
+    currentIndex.value = 0;
+    score.value = 0;
+    status.value = 'active';
+  } catch (error) {
+    errorMessage.value = error.message || 'Unable to load questions right now.';
+    status.value = 'error';
+  }
+};
+
+const handleAnswer = isCorrect => {
+  if (isCorrect) {
+    score.value += 1;
+  }
+};
+
+const goToNextQuestion = () => {
+  if (currentIndex.value + 1 >= questionCount.value) {
+    status.value = 'complete';
+  } else {
+    currentIndex.value += 1;
+  }
+};
+
+const restart = () => {
+  status.value = 'idle';
+  questions.value = [];
+  currentIndex.value = 0;
+  score.value = 0;
+  errorMessage.value = '';
+};
+
+const playAgain = () => {
+  if (lastSettings.value) {
+    startQuiz(lastSettings.value);
+  } else {
+    restart();
+  }
+};
+
+const retryFetch = () => {
+  if (lastSettings.value) {
+    startQuiz(lastSettings.value);
+  } else {
+    status.value = 'idle';
   }
 };
 </script>
 
-<style>
-#selector {
-  padding-top: 50px;
-  font-size: 20px;
+<style scoped>
+.app-shell {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.content {
+  flex: 1;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+}
+
+.state-card {
+  background: white;
+  border-radius: 24px;
+  padding: 36px 40px;
+  box-shadow: 0 40px 80px -60px rgba(15, 23, 42, 0.56);
+  max-width: 440px;
+  width: 100%;
+  text-align: center;
+  display: grid;
+  gap: 16px;
+  justify-items: center;
+}
+
+.state-card h2 {
+  margin: 0;
+}
+
+.state-card p {
+  margin: 0;
+  color: rgba(15, 23, 42, 0.72);
+}
+
+.spinner {
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  border: 5px solid rgba(37, 99, 235, 0.2);
+  border-top-color: #2563eb;
+  animation: spin 1s linear infinite;
+}
+
+.state-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.primary,
+.ghost {
+  padding: 12px 24px;
+  border-radius: 999px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+}
+
+.primary {
+  background: linear-gradient(135deg, #2563eb, #9333ea);
+  color: white;
+}
+
+.primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 18px 30px -22px rgba(37, 99, 235, 0.9);
+}
+
+.ghost {
+  background: transparent;
+  color: #2563eb;
+  border: 1px solid rgba(37, 99, 235, 0.3);
+}
+
+.ghost:hover {
+  opacity: 0.8;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (max-width: 640px) {
+  .content {
+    padding: 16px;
+  }
 }
 </style>
